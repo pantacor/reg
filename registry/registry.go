@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/docker/distribution/manifest/manifestlist"
+	"github.com/docker/distribution/manifest/ocischema"
 	"github.com/docker/distribution/manifest/schema2"
 	"github.com/docker/docker/api/types"
 )
@@ -150,6 +151,8 @@ func (r *Registry) getJSON(ctx context.Context, url string, response interface{}
 	}
 
 	switch response.(type) {
+	case *ocischema.Manifest:
+		req.Header.Add("Accept", ocischema.SchemaVersion.MediaType)
 	case *schema2.Manifest:
 		req.Header.Add("Accept", schema2.MediaTypeManifest)
 	case *manifestlist.ManifestList:

@@ -10,6 +10,7 @@ import (
 
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/manifestlist"
+	"github.com/docker/distribution/manifest/ocischema"
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/distribution/manifest/schema2"
 )
@@ -71,6 +72,37 @@ func (r *Registry) ManifestV2(ctx context.Context, repository, ref string) (sche
 	r.Logf("registry.manifests uri=%s repository=%s ref=%s", uri, repository, ref)
 
 	var m schema2.Manifest
+	if _, err := r.getJSON(ctx, uri, &m); err != nil {
+		r.Logf("registry.manifests response=%v", m)
+		return m, err
+	}
+
+	if m.Versioned.SchemaVersion != 2 {
+		return m, ErrUnexpectedSchemaVersion
+	}
+
+	return m, nil
+}
+
+// GeneralManifest gets any manifest type.
+func (r *Registry) GetManifest(ctx context.Context, m interface{}, repository, ref string) error {
+	uri := r.url("/v2/%s/manifests/%s", repository, ref)
+	r.Logf("registry.manifests uri=%s repository=%s ref=%s", uri, repository, ref)
+
+	if _, err := r.getJSON(ctx, uri, m); err != nil {
+		r.Logf("registry.manifests response=%v", m)
+		return err
+	}
+
+	return nil
+}
+
+// OCIManifestV1 gets the oci registry v1 manifest.
+func (r *Registry) OCIManifestV1(ctx context.Context, repository, ref string) (ocischema.Manifest, error) {
+	uri := r.url("/v2/%s/manifests/%s", repository, ref)
+	r.Logf("registry.manifests uri=%s repository=%s ref=%s", uri, repository, ref)
+
+	var m ocischema.Manifest
 	if _, err := r.getJSON(ctx, uri, &m); err != nil {
 		r.Logf("registry.manifests response=%v", m)
 		return m, err
